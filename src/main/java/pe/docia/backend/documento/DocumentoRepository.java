@@ -6,4 +6,5 @@ import java.util.Optional;
 
 public interface DocumentoRepository extends JpaRepository<Documento, Long> {
     Optional<Documento> findByHashSha256(String hashSha256);
+    long countByProyectoId(Long idProyecto);
 }
