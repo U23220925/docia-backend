@@ -1,3 +1,4 @@
+//(entidad)
 package pe.docia.backend.usuario;
 
 import jakarta.persistence.*;
