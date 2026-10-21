@@ -24,4 +24,9 @@ public class UsuarioController {
     public List<Usuario> listar() {
         return usuarioService.listarTodos();
     }
+
+    @PostMapping("/login")
+    public Usuario login(@RequestBody LoginRequest request) {
+        return usuarioService.login(request.getCorreo(), request.getPassword());
+    }
 }

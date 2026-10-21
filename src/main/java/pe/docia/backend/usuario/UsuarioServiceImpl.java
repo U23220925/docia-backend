@@ -32,4 +32,16 @@ public class UsuarioServiceImpl implements UsuarioService {
     public List<Usuario> listarTodos() {
         return usuarioRepository.findAll();
     }
+    @Override
+    public Usuario login(String correo, String password) {
+        Usuario usuario = usuarioRepository.findByCorreo(correo)
+                .orElseThrow(() -> new RuntimeException("Credenciales incorrectas"));
+
+        if (!passwordEncoder.matches(password, usuario.getPasswordHash())) {
+            throw new RuntimeException("Credenciales incorrectas");
+        }
+        return usuario;
+    }   
+
 }
+

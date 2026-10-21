@@ -8,4 +8,5 @@ public interface UsuarioService {
     Usuario crear(Usuario usuario);
     Optional<Usuario> buscarPorId(Long id);
     List<Usuario> listarTodos();
+    Usuario login(String correo, String password);
 }
