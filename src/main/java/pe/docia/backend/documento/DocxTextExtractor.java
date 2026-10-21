@@ -1,4 +1,4 @@
-package pe.docia.backend.ingesta;
+package pe.docia.backend.documento;
 
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;

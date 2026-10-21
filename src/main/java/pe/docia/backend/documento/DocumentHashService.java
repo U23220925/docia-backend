@@ -1,4 +1,4 @@
-package pe.docia.backend.ingesta;
+package pe.docia.backend.documento;
 
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
