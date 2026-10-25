@@ -20,6 +20,12 @@ public class Fragmento {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String texto;
 
+    @Column
+    private Integer pagina;
+
+    public Integer getPagina() { return pagina; }
+    public void setPagina(Integer pagina) { this.pagina = pagina; }
+
     public Long getId() { return id; }
     public Documento getDocumento() { return documento; }
     public void setDocumento(Documento documento) { this.documento = documento; }

@@ -2,7 +2,7 @@ package pe.docia.backend.usuario;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
+import pe.docia.backend.auditoria.AuditoriaService;
 import java.util.List;
 import java.util.Optional;
 
@@ -11,10 +11,13 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuditoriaService auditoriaService;
 
-    public UsuarioServiceImpl(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder) {
+    public UsuarioServiceImpl(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder,
+                              AuditoriaService auditoriaService) {
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
+        this.auditoriaService = auditoriaService;
     }
 
     @Override
@@ -32,6 +35,7 @@ public class UsuarioServiceImpl implements UsuarioService {
     public List<Usuario> listarTodos() {
         return usuarioRepository.findAll();
     }
+
     @Override
     public Usuario login(String correo, String password) {
         Usuario usuario = usuarioRepository.findByCorreo(correo)
@@ -40,8 +44,11 @@ public class UsuarioServiceImpl implements UsuarioService {
         if (!passwordEncoder.matches(password, usuario.getPasswordHash())) {
             throw new RuntimeException("Credenciales incorrectas");
         }
+        
+        auditoriaService.registrar(usuario, "LOGIN", "Usuario", usuario.getId());
         return usuario;
     }
+
     @Override
     public List<Usuario> listarPorEmpresa(Long idEmpresa) {
         return usuarioRepository.findByEmpresaId(idEmpresa);
@@ -55,4 +62,3 @@ public class UsuarioServiceImpl implements UsuarioService {
     }
 
 }
-

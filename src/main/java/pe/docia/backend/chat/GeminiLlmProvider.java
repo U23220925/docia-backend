@@ -25,30 +25,34 @@ public class GeminiLlmProvider implements LlmProvider {
     public String getNombre() { return "Google Gemini (gemini-2.5-flash)"; }
 
     @Override
-    public String generarRespuesta(String prompt) throws Exception {
-        var body = mapper.createObjectNode();
-        var contents = mapper.createArrayNode();
-        var contenido = mapper.createObjectNode();
-        var partes = mapper.createArrayNode();
-        var parte = mapper.createObjectNode();
-        parte.put("text", prompt);
-        partes.add(parte);
-        contenido.set("parts", partes);
-        contents.add(contenido);
-        body.set("contents", contents);
+public LlmRespuesta generarRespuesta(String prompt) throws Exception {
+    var body = mapper.createObjectNode();
+    var contents = mapper.createArrayNode();
+    var contenido = mapper.createObjectNode();
+    var partes = mapper.createArrayNode();
+    var parte = mapper.createObjectNode();
+    parte.put("text", prompt);
+    partes.add(parte);
+    contenido.set("parts", partes);
+    contents.add(contenido);
+    body.set("contents", contents);
 
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"))
-                .header("Content-Type", "application/json")
-                .header("x-goog-api-key", apiKey)
-                .POST(HttpRequest.BodyPublishers.ofString(body.toString()))
-                .build();
+    HttpRequest request = HttpRequest.newBuilder()
+            .uri(URI.create("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"))
+            .header("Content-Type", "application/json")
+            .header("x-goog-api-key", apiKey)
+            .POST(HttpRequest.BodyPublishers.ofString(body.toString()))
+            .build();
 
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        if (response.statusCode() != 200) {
-            throw new RuntimeException("Gemini respondio " + response.statusCode() + ": " + response.body());
-        }
-        JsonNode json = mapper.readTree(response.body());
-        return json.get("candidates").get(0).get("content").get("parts").get(0).get("text").asText();
+    HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+    if (response.statusCode() != 200) {
+        throw new RuntimeException("Gemini respondio " + response.statusCode() + ": " + response.body());
     }
+    JsonNode json = mapper.readTree(response.body());
+    String texto = json.get("candidates").get(0).get("content").get("parts").get(0).get("text").asText();
+    JsonNode usage = json.get("usageMetadata");
+    int entrada = usage != null && usage.has("promptTokenCount") ? usage.get("promptTokenCount").asInt() : 0;
+    int salida = usage != null && usage.has("candidatesTokenCount") ? usage.get("candidatesTokenCount").asInt() : 0;
+    return new LlmRespuesta(texto, entrada, salida, getNombre());
+}
 }

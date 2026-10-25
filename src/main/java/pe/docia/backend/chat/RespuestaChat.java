@@ -3,12 +3,12 @@ package pe.docia.backend.chat;
 import java.util.List;
 
 public class RespuestaChat {
-    private Long idConversacion;
-    private String respuesta;
-    private boolean corroborado;
-    private List<String> citas;
+    private final Long idConversacion;
+    private final String respuesta;
+    private final boolean corroborado;
+    private final List<CitaDTO> citas;
 
-    public RespuestaChat(Long idConversacion, String respuesta, boolean corroborado, List<String> citas) {
+    public RespuestaChat(Long idConversacion, String respuesta, boolean corroborado, List<CitaDTO> citas) {
         this.idConversacion = idConversacion;
         this.respuesta = respuesta;
         this.corroborado = corroborado;
@@ -17,5 +17,5 @@ public class RespuestaChat {
     public Long getIdConversacion() { return idConversacion; }
     public String getRespuesta() { return respuesta; }
     public boolean isCorroborado() { return corroborado; }
-    public List<String> getCitas() { return citas; }
+    public List<CitaDTO> getCitas() { return citas; }
 }

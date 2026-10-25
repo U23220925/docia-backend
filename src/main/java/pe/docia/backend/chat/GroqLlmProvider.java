@@ -25,7 +25,7 @@ public class GroqLlmProvider implements LlmProvider {
     public String getNombre() { return "Groq (openai/gpt-oss-120b)"; }
 
     @Override
-    public String generarRespuesta(String prompt) throws Exception {
+    public LlmRespuesta generarRespuesta(String prompt) throws Exception {
         var body = mapper.createObjectNode();
         body.put("model", "openai/gpt-oss-120b");
         var mensajes = mapper.createArrayNode();
@@ -47,6 +47,10 @@ public class GroqLlmProvider implements LlmProvider {
             throw new RuntimeException("Groq respondio " + response.statusCode() + ": " + response.body());
         }
         JsonNode json = mapper.readTree(response.body());
-        return json.get("choices").get(0).get("message").get("content").asText();
+        String texto = json.get("choices").get(0).get("message").get("content").asText();
+        JsonNode usage = json.get("usage");
+        int entrada = usage != null && usage.has("prompt_tokens") ? usage.get("prompt_tokens").asInt() : 0;
+        int salida = usage != null && usage.has("completion_tokens") ? usage.get("completion_tokens").asInt() : 0;
+        return new LlmRespuesta(texto, entrada, salida, getNombre());
     }
 }

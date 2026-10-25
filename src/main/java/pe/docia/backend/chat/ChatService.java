@@ -1,10 +1,16 @@
 package pe.docia.backend.chat;
 
+import org.springframework.context.annotation.Lazy; // <-- NUEVO IMPORT IMPRESCINDIBLE
 import org.springframework.stereotype.Service;
+import pe.docia.backend.auditoria.AuditoriaService;
+import pe.docia.backend.auditoria.ConsumoTokens;
+import pe.docia.backend.auditoria.ConsumoTokensRepository;
 import pe.docia.backend.documento.Fragmento;
 import pe.docia.backend.documento.FragmentoRepository;
 import pe.docia.backend.proyecto.Proyecto;
 import pe.docia.backend.proyecto.ProyectoRepository;
+import pe.docia.backend.usuario.Usuario;
+import pe.docia.backend.usuario.UsuarioRepository;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -19,18 +25,29 @@ public class ChatService {
     private final ConversacionRepository conversacionRepository;
     private final MensajeRepository mensajeRepository;
     private final LlmOrchestratorService llmOrchestrator;
+    private final ConsumoTokensRepository consumoTokensRepository;
+    private final UsuarioRepository usuarioRepository;
+    private final AuditoriaService auditoriaService;
+    private final ExportacionPdfService exportacionPdfService; 
 
+    // CORRECCIÓN CLAVE: Agregamos @Lazy antes del ExportacionPdfService para romper la dependencia circular de Spring
     public ChatService(FragmentoRepository fragmentoRepository, ProyectoRepository proyectoRepository,
                         ConversacionRepository conversacionRepository, MensajeRepository mensajeRepository,
-                        LlmOrchestratorService llmOrchestrator) {
+                        LlmOrchestratorService llmOrchestrator, ConsumoTokensRepository consumoTokensRepository,
+                        UsuarioRepository usuarioRepository, AuditoriaService auditoriaService,
+                        @Lazy ExportacionPdfService exportacionPdfService) { 
         this.fragmentoRepository = fragmentoRepository;
         this.proyectoRepository = proyectoRepository;
         this.conversacionRepository = conversacionRepository;
         this.mensajeRepository = mensajeRepository;
         this.llmOrchestrator = llmOrchestrator;
+        this.consumoTokensRepository = consumoTokensRepository;
+        this.usuarioRepository = usuarioRepository;
+        this.auditoriaService = auditoriaService;
+        this.exportacionPdfService = exportacionPdfService;
     }
 
-    public RespuestaChat preguntar(Long idProyecto, Long idConversacion, String pregunta) {
+    public RespuestaChat preguntar(Long idProyecto, Long idConversacion, String pregunta, Long idUsuario) {
         Proyecto proyecto = proyectoRepository.findById(idProyecto)
                 .orElseThrow(() -> new RuntimeException("Proyecto no encontrado"));
 
@@ -43,6 +60,8 @@ public class ChatService {
         List<Fragmento> fragmentos = fragmentoRepository.findByDocumento_Proyecto_Id(idProyecto);
         List<Fragmento> relevantes = buscarFragmentosRelevantes(pregunta, fragmentos);
 
+        Usuario usuario = idUsuario != null ? usuarioRepository.findById(idUsuario).orElse(null) : null;
+
         if (relevantes.isEmpty()) {
             String msg = "La consulta no pudo ser corroborada en la documentación cargada para este proyecto.";
             guardarMensaje(conversacion, "ASISTENTE", msg, false);
@@ -50,14 +69,26 @@ public class ChatService {
         }
 
         String prompt = construirPrompt(pregunta, relevantes);
-        String respuestaIa = llmOrchestrator.generarRespuesta(prompt);
-        guardarMensaje(conversacion, "ASISTENTE", respuestaIa, true);
+        LlmRespuesta llmRespuesta = llmOrchestrator.generarRespuesta(prompt);
+        guardarMensaje(conversacion, "ASISTENTE", llmRespuesta.getTexto(), true);
 
-        List<String> citas = relevantes.stream()
-                .map(f -> f.getDocumento().getNombreArchivo() + " (fragmento " + f.getOrden() + ")")
+        ConsumoTokens consumo = new ConsumoTokens();
+        consumo.setProyecto(proyecto);
+        consumo.setUsuario(usuario);
+        consumo.setModelo(llmRespuesta.getProveedor());
+        consumo.setTokensEntrada(llmRespuesta.getTokensEntrada());
+        consumo.setTokensSalida(llmRespuesta.getTokensSalida());
+        consumoTokensRepository.save(consumo);
+
+        if (usuario != null) {
+            auditoriaService.registrar(usuario, "CONSULTA_CHAT", "Conversacion", conversacion.getId());
+        }
+
+        List<CitaDTO> citas = relevantes.stream()
+                .map(f -> new CitaDTO(f.getId(), f.getDocumento().getNombreArchivo(), f.getPagina(), f.getOrden()))
                 .toList();
 
-        return new RespuestaChat(conversacion.getId(), respuestaIa, true, citas);
+        return new RespuestaChat(conversacion.getId(), llmRespuesta.getTexto(), true, citas);
     }
 
     private Conversacion nuevaConversacion(Proyecto proyecto) {
@@ -108,5 +139,11 @@ public class ChatService {
         m.setContenido(contenido);
         m.setCorroborado(corroborado);
         mensajeRepository.save(m);
+    }
+
+    public byte[] exportarConversacionPdf(Long idConversacion) throws Exception {
+        Conversacion conversacion = conversacionRepository.findById(idConversacion)
+                .orElseThrow(() -> new RuntimeException("Conversacion no encontrada"));
+        return exportacionPdfService.exportarConversacion(conversacion);
     }
 }

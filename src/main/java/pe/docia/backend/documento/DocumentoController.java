@@ -16,7 +16,8 @@ public class DocumentoController {
     }
 
     @PostMapping(consumes = "multipart/form-data")
-    public Documento subir(@RequestParam Long idProyecto, @RequestParam MultipartFile archivo) throws IOException {
-        return documentoService.subirDocumento(idProyecto, archivo);
+    public Documento subir(@RequestParam Long idProyecto, @RequestParam MultipartFile archivo,
+                            @RequestParam(required = false) Long idUsuario) throws IOException {
+        return documentoService.subirDocumento(idProyecto, archivo, idUsuario);
     }
 }

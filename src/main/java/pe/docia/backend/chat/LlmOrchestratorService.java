@@ -12,16 +12,16 @@ public class LlmOrchestratorService {
         this.proveedores = proveedores;
     }
 
-    public String generarRespuesta(String prompt) {
-        Exception ultimoError = null;
-        for (LlmProvider proveedor : proveedores) {
-            try {
-                return proveedor.generarRespuesta(prompt);
-            } catch (Exception e) {
-                System.out.println("Fallo " + proveedor.getNombre() + ": " + e.getMessage() + " -> probando siguiente");
-                ultimoError = e;
-            }
+    public LlmRespuesta generarRespuesta(String prompt) {
+    Exception ultimoError = null;
+    for (LlmProvider proveedor : proveedores) {
+        try {
+            return proveedor.generarRespuesta(prompt);
+        } catch (Exception e) {
+            System.out.println("Fallo " + proveedor.getNombre() + ": " + e.getMessage() + " -> probando siguiente");
+            ultimoError = e;
         }
-        throw new RuntimeException("Todos los proveedores de IA fallaron", ultimoError);
     }
+    throw new RuntimeException("Todos los proveedores de IA fallaron", ultimoError);
+}
 }
