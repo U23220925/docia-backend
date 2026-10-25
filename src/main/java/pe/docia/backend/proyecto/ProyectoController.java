@@ -1,7 +1,8 @@
 package pe.docia.backend.proyecto;
 
 import org.springframework.web.bind.annotation.*;
-import pe.docia.backend.documento.DocumentoRepository; 
+import pe.docia.backend.empresa.Empresa;
+import pe.docia.backend.empresa.EmpresaRepository;
 
 import java.util.List;
 
@@ -10,26 +11,30 @@ import java.util.List;
 public class ProyectoController {
 
     private final ProyectoService proyectoService;
-    private final DocumentoRepository documentoRepository; // 1. DECLARAR LA VARIABLE
+    private final EmpresaRepository empresaRepository;
 
-    // 2. INYECTAR EN EL CONSTRUCTOR (Ambos repositorios/servicios van separados por coma)
-    public ProyectoController(ProyectoService proyectoService, DocumentoRepository documentoRepository) {
+    public ProyectoController(ProyectoService proyectoService, EmpresaRepository empresaRepository) {
         this.proyectoService = proyectoService;
-        this.documentoRepository = documentoRepository;
+        this.empresaRepository = empresaRepository;
     }
 
     @PostMapping
-    public Proyecto crear(@RequestBody Proyecto proyecto) {
+    public Proyecto crear(@RequestBody ProyectoRequest request) {
+        Proyecto proyecto = new Proyecto();
+        proyecto.setNombre(request.getNombre());
+        proyecto.setCodigo(request.getCodigo());
+
+        if (request.getIdEmpresa() != null) {
+            Empresa empresa = empresaRepository.findById(request.getIdEmpresa())
+                    .orElseThrow(() -> new RuntimeException("Empresa no encontrada: " + request.getIdEmpresa()));
+            proyecto.setEmpresa(empresa);
+        }
+
         return proyectoService.crear(proyecto);
     }
 
     @GetMapping
-    public List<Proyecto> listar() {
-        return proyectoService.listarTodos();
-    }
-
-    @GetMapping("/{id}/conteo-documentos")
-    public long contarDocumentos(@PathVariable Long id) {
-        return documentoRepository.countByProyectoId(id); 
+    public List<Proyecto> listar(@RequestParam(required = false) Long idEmpresa) {
+        return idEmpresa != null ? proyectoService.listarPorEmpresa(idEmpresa) : proyectoService.listarTodos();
     }
 }

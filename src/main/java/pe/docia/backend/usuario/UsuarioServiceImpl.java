@@ -41,7 +41,18 @@ public class UsuarioServiceImpl implements UsuarioService {
             throw new RuntimeException("Credenciales incorrectas");
         }
         return usuario;
-    }   
+    }
+    @Override
+    public List<Usuario> listarPorEmpresa(Long idEmpresa) {
+        return usuarioRepository.findByEmpresaId(idEmpresa);
+    }
+
+    @Override
+    public Usuario cambiarEstado(Long id, String nuevoEstado) {
+        Usuario u = usuarioRepository.findById(id).orElseThrow();
+        u.setEstado(nuevoEstado);
+        return usuarioRepository.save(u);
+    }
 
 }
 

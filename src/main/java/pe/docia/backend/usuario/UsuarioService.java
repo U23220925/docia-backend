@@ -9,4 +9,6 @@ public interface UsuarioService {
     Optional<Usuario> buscarPorId(Long id);
     List<Usuario> listarTodos();
     Usuario login(String correo, String password);
+    List<Usuario> listarPorEmpresa(Long idEmpresa);
+    Usuario cambiarEstado(Long id, String nuevoEstado);
 }

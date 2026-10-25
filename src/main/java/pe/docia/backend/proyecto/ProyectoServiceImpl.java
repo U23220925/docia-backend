@@ -22,4 +22,9 @@ public class ProyectoServiceImpl implements ProyectoService {
     public List<Proyecto> listarTodos() {
         return proyectoRepository.findAll();
     }
+
+    @Override
+    public List<Proyecto> listarPorEmpresa(Long idEmpresa) {
+        return proyectoRepository.findByEmpresaId(idEmpresa);
+    }
 }

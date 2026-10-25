@@ -72,7 +72,6 @@
 			<artifactId>spring-boot-starter-security</artifactId>
 		</dependency>
 
-		<!-- SOLUCIÓN AL ERROR DE COMPILACIÓN: Jackson Databind para manejo de JSON con las IA -->
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
